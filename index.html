@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Daily Plan"/>
+  <title>Daily Plan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:#FAF7F2; --ink:#1C1A17; --ink-soft:#3D3A34; --muted:#8C8880;
+      --border:#E5DFD5; --gold:#C8973A; --rose:#C4736A; --sage:#6A9E7E;
+      --blue:#5B7FA6; --lav:#8B7BB5;
+      --shadow:0 2px 12px rgba(28,26,23,.07),0 1px 3px rgba(28,26,23,.04);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;padding-bottom:calc(env(safe-area-inset-bottom,0px)+40px);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+
+    /* ── HEADER ── */
+    .header{background:var(--ink);color:var(--cream);padding:calc(env(safe-area-inset-top,0px)+36px) 20px 20px;position:relative;overflow:hidden;}
+    .header::before{content:'';position:absolute;top:-50px;right:-30px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(200,151,58,.15) 0%,transparent 70%);pointer-events:none;}
+    .eyebrow{font-size:10.5px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
+    .h-title{font-family:'Fraunces',serif;font-size:28px;font-weight:500;line-height:1.1;letter-spacing:-.02em;margin-bottom:3px;}
+    .h-sub{font-size:12px;color:rgba(250,247,242,.4);font-weight:300;margin-bottom:3px;}
+    .h-sub-note{font-size:10px;color:rgba(250,247,242,.22);font-style:italic;margin-bottom:14px;}
+    .prog-wrap{background:rgba(255,255,255,.08);border-radius:100px;height:4px;overflow:hidden;margin-bottom:6px;}
+    .prog-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--gold),var(--rose));transition:width .5s cubic-bezier(.34,1.56,.64,1);}
+    .prog-lbl{font-size:10px;color:rgba(250,247,242,.3);font-weight:300;}
+
+    /* ── HEADER CONTROLS ── */
+    .header-controls{display:flex;gap:8px;margin-top:14px;}
+    .hc-btn{padding:6px 12px;border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid rgba(255,255,255,.15);color:rgba(250,247,242,.6);background:transparent;font-family:'DM Sans',sans-serif;transition:all .18s ease;white-space:nowrap;user-select:none;}
+    .hc-btn.active{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:var(--cream);}
+    .hc-btn.focus-active{background:var(--rose);border-color:var(--rose);color:white;}
+    .hc-btn.streak{color:var(--gold);border-color:rgba(200,151,58,.35);}
+
+    /* ── TABS ── */
+    .tabs-wrap{background:var(--ink);padding:0 20px 16px;overflow-x:auto;scrollbar-width:none;}
+    .tabs-wrap::-webkit-scrollbar{display:none;}
+    .tabs{display:flex;gap:6px;width:max-content;}
+    .tab{padding:7px 14px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;transition:all .18s ease;white-space:nowrap;border:1.5px solid rgba(255,255,255,.12);color:rgba(250,247,242,.5);background:transparent;user-select:none;}
+    .tab.active{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:600;}
+    .tab.today-tab:not(.active){border-color:rgba(200,151,58,.4);color:rgba(250,247,242,.75);}
+    .tab.no-plan{opacity:.45;}
+    .tab.list-tab.active{background:var(--lav);border-color:var(--lav);color:white;}
+    .tab.list-tab:not(.active){border-color:rgba(139,123,181,.35);color:rgba(250,247,242,.55);}
+
+    /* ── DEADLINE ── */
+    .deadline{margin:12px 14px 0;background:rgba(200,151,58,.08);border:1px solid rgba(200,151,58,.22);border-radius:11px;padding:10px 13px;font-size:12.5px;color:var(--ink-soft);line-height:1.45;}
+    .deadline strong{color:#9A6C22;font-weight:600;}
+
+    /* ── LEGEND ── */
+    .legend{display:flex;gap:12px;padding:10px 14px;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none;}
+    .legend::-webkit-scrollbar{display:none;}
+    .li{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:500;color:var(--muted);white-space:nowrap;}
+    .ld{width:7px;height:7px;border-radius:50%;}
+
+    /* ── NO PLAN ── */
+    .no-plan-msg{padding:48px 24px;text-align:center;}
+    .no-plan-msg .emoji{font-size:36px;margin-bottom:12px;}
+    .no-plan-msg h3{font-family:'Fraunces',serif;font-size:18px;font-weight:500;margin-bottom:6px;}
+    .no-plan-msg p{font-size:13px;color:var(--muted);line-height:1.5;}
+
+    /* ── SECTION ── */
+    .section{padding:16px 14px 2px;}
+    .sec-title{font-size:9.5px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:8px;}
+    .sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+    /* ── TASK CARD (swipeable) ── */
+    .swipe-wrap{position:relative;margin-bottom:7px;border-radius:12px;overflow:hidden;}
+    .swipe-bg-left{position:absolute;inset:0;background:var(--sage);display:flex;align-items:center;padding-left:18px;font-size:13px;font-weight:600;color:white;border-radius:12px;}
+    .swipe-bg-right{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;gap:6px;border-radius:12px;background:var(--lav);}
+    .swipe-action-btn{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.18);color:white;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+
+    .task{background:#fff;border-radius:12px;padding:12px 13px;display:flex;align-items:flex-start;gap:10px;box-shadow:var(--shadow);border-left:3px solid transparent;position:relative;overflow:hidden;animation:up .32s ease both;touch-action:pan-y;will-change:transform;transition:transform .05s linear;}
+    .task.peak{border-left-color:var(--gold);}
+    .task.decent{border-left-color:var(--sage);}
+    .task.crash{border-left-color:var(--lav);}
+    .task.fixed{border-left-color:var(--blue);}
+    .task.done{opacity:.38;}
+    .task.done .t-title{text-decoration:line-through;color:var(--muted);}
+    .task.postponed .t-title{color:var(--muted);}
+    .task.tomorrow-state .t-title{color:var(--muted);}
+    .task.event{background:#fafafa;opacity:.8;animation:up .32s ease both;}
+    .task.event .t-title{color:var(--ink-soft);}
+
+    /* Focus mode — hide non-pinned */
+    body.focus-mode .swipe-wrap.not-focus{display:none;}
+    body.focus-mode .section:not(.has-focus-task) .sec-title{display:none;}
+    body.focus-mode .section:not(.has-focus-task){padding:0;}
+
+    /* Energy filter — hide tasks not in current window */
+    body.filter-peak .swipe-wrap:not(.energy-peak):not(.energy-fixed){display:none;}
+    body.filter-decent .swipe-wrap:not(.energy-decent):not(.energy-fixed){display:none;}
+    body.filter-crash .swipe-wrap:not(.energy-crash):not(.energy-fixed){display:none;}
+    body.filter-peak .event-wrap:not(.energy-fixed){display:none;}
+    body.filter-decent .event-wrap:not(.energy-fixed){display:none;}
+    body.filter-crash .event-wrap:not(.energy-fixed){display:none;}
+
+    /* Pin button */
+    .pin-btn{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.3;transition:opacity .15s;}
+    .pin-btn.pinned{opacity:1;}
+    .task:hover .pin-btn, .task:active .pin-btn{opacity:.6;}
+
+    /* Checkbox / state indicator */
+    .chk{width:20px;height:20px;border-radius:50%;border:1.75px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .17s ease;background:#fff;font-size:11px;color:white;}
+    .task.done .chk{background:var(--sage);border-color:var(--sage);}
+    .task.postponed .chk{background:var(--lav);border-color:var(--lav);}
+    .task.tomorrow-state .chk{background:var(--blue);border-color:var(--blue);}
+    .evt-dot{width:20px;height:20px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;}
+    .evt-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--border);}
+
+    .t-body{flex:1;min-width:0;}
+    .t-time{font-size:9.5px;font-weight:500;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin-bottom:2px;}
+    .t-title{font-size:14px;font-weight:400;line-height:1.35;color:var(--ink);}
+    .t-note{font-size:11px;color:var(--muted);font-style:italic;margin-top:3px;line-height:1.4;}
+    .t-first-step{font-size:11.5px;color:var(--gold);margin-top:4px;font-weight:500;}
+    .t-first-step::before{content:'▶ Start: ';}
+    .t-status{font-size:10px;font-weight:500;margin-top:3px;}
+    .t-status.postponed{color:var(--lav);}
+    .t-status.tomorrow{color:var(--blue);}
+    .badge{font-size:9px;font-weight:600;padding:2px 6px;border-radius:100px;background:rgba(196,115,106,.11);color:var(--rose);flex-shrink:0;margin-top:2px;letter-spacing:.04em;}
+
+    /* ── NOW PILL ── */
+    .now-pill{display:inline-flex;align-items:center;gap:5px;background:var(--rose);color:white;font-size:9.5px;font-weight:600;letter-spacing:.07em;padding:2px 8px 2px 6px;border-radius:100px;margin-bottom:6px;text-transform:uppercase;}
+    .now-dot{width:5px;height:5px;border-radius:50%;background:white;animation:blink 1.4s ease-in-out infinite;}
+    @keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+
+    /* ── FOCUS MODE BANNER ── */
+    .focus-banner{margin:12px 14px 0;background:rgba(196,115,106,.08);border:1px solid rgba(196,115,106,.22);border-radius:11px;padding:10px 14px;display:flex;align-items:center;gap:10px;}
+    .focus-banner-text{font-size:12.5px;color:var(--ink-soft);flex:1;line-height:1.4;}
+    .focus-banner-text strong{color:var(--rose);font-weight:600;}
+    .focus-hint{font-size:10.5px;color:var(--muted);margin-top:2px;}
+
+    /* ── ENERGY FILTER BAR ── */
+    .energy-bar{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+    .energy-bar::-webkit-scrollbar{display:none;}
+    .ef-btn{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);color:var(--muted);background:#fff;font-family:'DM Sans',sans-serif;transition:all .16s ease;white-space:nowrap;user-select:none;}
+    .ef-btn.active-peak{background:rgba(200,151,58,.1);border-color:var(--gold);color:var(--gold);}
+    .ef-btn.active-decent{background:rgba(106,158,126,.1);border-color:var(--sage);color:var(--sage);}
+    .ef-btn.active-crash{background:rgba(139,123,181,.1);border-color:var(--lav);color:var(--lav);}
+    .ef-btn.active-all{background:rgba(28,26,23,.06);border-color:var(--ink-soft);color:var(--ink-soft);}
+
+    /* ── TRAY ── */
+    .tray-banner{margin:12px 14px 0;background:rgba(91,127,166,.07);border:1px solid rgba(91,127,166,.2);border-radius:11px;padding:11px 14px;}
+    .tray-title{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;}
+
+    /* Carried task */
+    .carried-wrap{position:relative;border-radius:12px;overflow:hidden;margin-bottom:6px;}
+    .carried-bg-left{position:absolute;inset:0;background:var(--sage);display:flex;align-items:center;padding-left:18px;font-size:13px;font-weight:600;color:white;border-radius:12px;}
+    .carried-bg-right{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;gap:6px;border-radius:12px;background:var(--lav);}
+    .carried-task{background:#fff;border-radius:12px;padding:12px 13px;display:flex;align-items:flex-start;gap:10px;box-shadow:var(--shadow);border-left:3px solid rgba(91,127,166,.5);position:relative;touch-action:pan-y;will-change:transform;transition:transform .05s linear;}
+    .carried-task.done{opacity:.38;}
+    .carried-task.done .t-title{text-decoration:line-through;color:var(--muted);}
+    .carried-task.postponed-s .t-title{color:var(--muted);}
+    .carried-task.tomorrow-s .t-title{color:var(--muted);}
+    .carried-chk{width:20px;height:20px;border-radius:50%;border:1.75px solid rgba(91,127,166,.4);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;background:#fff;font-size:11px;color:white;transition:all .17s ease;}
+    .carried-task.done .carried-chk{background:var(--sage);border-color:var(--sage);}
+    .carried-task.postponed-s .carried-chk{background:var(--lav);border-color:var(--lav);}
+    .carried-task.tomorrow-s .carried-chk{background:var(--blue);border-color:var(--blue);}
+    .carried-from{font-size:9.5px;color:var(--blue);font-weight:500;margin-bottom:2px;}
+
+    /* ── ALL DONE BANNER ── */
+    .all-done-banner{margin:12px 14px 0;background:linear-gradient(135deg,rgba(106,158,126,.12),rgba(200,151,58,.08));border:1px solid rgba(106,158,126,.3);border-radius:11px;padding:14px 16px;text-align:center;}
+    .all-done-banner .em{font-size:24px;margin-bottom:4px;}
+    .all-done-banner h3{font-family:'Fraunces',serif;font-size:15px;font-weight:500;margin-bottom:2px;}
+    .all-done-banner p{font-size:11.5px;color:var(--muted);}
+
+    /* ── UNDO TOAST ── */
+    #toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+20px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--cream);padding:10px 18px;border-radius:100px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.25);opacity:0;transition:all .25s ease;pointer-events:none;z-index:1000;white-space:nowrap;}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:all;}
+    #toast-undo{background:var(--gold);border:none;color:var(--ink);padding:4px 12px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+    /* ── ALL TASKS TAB ── */
+    .list-header{padding:12px 14px 4px;display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--muted);}
+    .list-header .sched-legend{display:flex;align-items:center;gap:5px;}
+    .list-header .sched-dot{width:8px;height:8px;border-radius:50%;background:var(--border);border:1.5px solid rgba(91,127,166,.4);}
+    .list-section{padding:14px 14px 2px;}
+    .list-sec-title{font-size:9.5px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+    .list-sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+    /* Active items */
+    .todo-item{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);animation:up .3s ease both;cursor:pointer;user-select:none;transition:opacity .18s;}
+    .todo-item.scheduled{opacity:.35;}
+    .todo-item.done-todo{display:none;} /* hidden by default, shown in completed section */
+    .todo-chk{width:20px;height:20px;border-radius:50%;border:1.75px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .17s ease;background:#fff;font-size:11px;color:white;}
+    .todo-item.scheduled .todo-chk{border-color:rgba(91,127,166,.3);}
+    .todo-body{flex:1;min-width:0;}
+    .todo-title{font-size:13.5px;font-weight:400;color:var(--ink);line-height:1.3;}
+    .todo-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
+    .todo-cat{font-size:9px;font-weight:600;padding:2px 6px;border-radius:100px;white-space:nowrap;}
+    .cat-urgent{background:rgba(196,115,106,.1);color:var(--rose);}
+    .cat-work{background:rgba(91,127,166,.1);color:var(--blue);}
+    .cat-personal{background:rgba(106,158,126,.1);color:var(--sage);}
+    .sched-tag{font-size:9px;font-weight:500;color:var(--blue);display:flex;align-items:center;gap:3px;background:rgba(91,127,166,.08);padding:2px 6px;border-radius:100px;}
+
+    /* Completed section */
+    .completed-toggle{margin:8px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:10px 14px;background:#fff;border-radius:12px;box-shadow:var(--shadow);}
+    .completed-toggle-label{font-size:12px;font-weight:500;color:var(--muted);flex:1;}
+    .completed-toggle-count{font-size:11px;color:var(--muted);background:var(--cream);padding:2px 8px;border-radius:100px;}
+    .completed-toggle-arrow{font-size:11px;color:var(--muted);transition:transform .2s ease;}
+    .completed-toggle-arrow.open{transform:rotate(180deg);}
+    .completed-section{padding:0 14px 4px;display:none;}
+    .completed-section.open{display:block;}
+    .completed-item{background:#fff;border-radius:12px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);opacity:.38;cursor:pointer;}
+    .completed-item .todo-title{text-decoration:line-through;color:var(--muted);font-size:13px;}
+    .completed-chk{width:20px;height:20px;border-radius:50%;background:var(--sage);border:none;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;}
+
+    .footer{text-align:center;padding:20px 14px 4px;font-size:10.5px;color:var(--muted);line-height:1.7;}
+    #confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;display:none;}
+    @keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div id="toast"><span id="toast-msg"></span><button id="toast-undo" onclick="undoLast()">Undo</button></div>
+<div id="root"></div>
+<script>
+
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
+const WEEK = [
+  {
+    key:'mon', label:'Mon', fullLabel:'Monday, April 13', hasplan:true, deadline:null,
+    sections:[
+      { title:'🌅 Morning', energy:'decent', tasks:[
+        {id:'m1',  time:'6:30 AM',        title:'Wake up, breakfast, coffee ☕',        checkable:false},
+        {id:'m2',  time:'7:00 AM',        title:'⭐ Pack bag for home visits',           note:'Quick win ~10 min',                          checkable:true, urgent:false},
+        {id:'m3',  time:'7:15 AM',        title:'Yoga / stretching 🧘',                 checkable:false},
+        {id:'m4',  time:'7:30 AM',        title:'Buffer — review today\'s plan',        checkable:false},
+      ]},
+      { title:'🏠 Home Visit', energy:'fixed', tasks:[
+        {id:'m5',  time:'9:00 AM',        title:'Leave for home visit 🚗',              checkable:false},
+        {id:'m6',  time:'9:30–10:30 AM',  title:'Home visit 🏠',                        checkable:false},
+        {id:'m7',  time:'10:30–10:45 AM', title:'Debrief notes after visit',            note:'While memory is fresh',                      checkable:true, urgent:false},
+      ]},
+      { title:'💪 Peak Energy', energy:'peak', tasks:[
+        {id:'m8',  time:'10:45–11:30 AM', title:'Finalize eval form 📝',                note:'Hard task first',  firstStep:'Open the eval form doc',  checkable:true, urgent:true},
+        {id:'m9',  time:'11:30–11:45 AM', title:'Buffer / transition',                  checkable:false},
+      ]},
+      { title:'🍽️ Lunch', energy:'decent', tasks:[
+        {id:'m10', time:'12:00–12:30 PM', title:'Lunch 🍽️',                             checkable:false},
+      ]},
+      { title:'🌤️ Afternoon', energy:'decent', tasks:[
+        {id:'m11', time:'12:30–1:00 PM',  title:'Prep for taxes',                       note:'Boring — reward: walk after!', firstStep:'Gather your W-2 and open TurboTax', checkable:true, urgent:false},
+        {id:'m12', time:'1:00–1:15 PM',   title:'Order Ellie\'s AbleNet device 📦',    note:'Quick win ~5 min',                           checkable:true, urgent:false, predone:true},
+        {id:'m13', time:'1:15–1:30 PM',   title:'Buffer / catch-up',                   checkable:false},
+      ]},
+      { title:'😴 Crash Window', energy:'crash', tasks:[
+        {id:'m14', time:'2:30–2:55 PM',   title:'Snack + settle in for therapy 🍎',    checkable:false},
+        {id:'m15', time:'3:00–4:00 PM',   title:'Personal therapy (Zoom) 🧠',          checkable:false},
+        {id:'m16', time:'4:00–5:00 PM',   title:'Admin / easy emails only',            note:'No hard tasks — crash territory',            checkable:true, urgent:false},
+      ]},
+      { title:'🌙 Evening', energy:'decent', tasks:[
+        {id:'m17', time:'5:00 PM',        title:'Close laptop ✅',                       checkable:false},
+        {id:'m18', time:'6:00 PM',        title:'Dinner 🍽️',                            checkable:false},
+        {id:'m19', time:'9:00 PM',        title:'Wind-down 📵',                         checkable:false},
+        {id:'m20', time:'Before 10 PM',   title:'Bed 😴',                               checkable:false},
+      ]},
+    ]
+  },
+  {
+    key:'tue', label:'Tue', fullLabel:'Tuesday, April 14', hasplan:true,
+    deadline:'⚠️ <strong>Taxes due end of April 15</strong> — today is your last full day!',
+    sections:[
+      { title:'🌅 Morning', energy:'decent', tasks:[
+        {id:'t1',  time:'7:15 AM',        title:'Wake up 😴',                           checkable:false},
+        {id:'t2',  time:'7:15–8:00 AM',   title:'Breakfast, coffee, skincare',          checkable:false},
+        {id:'t3',  time:'8:00–8:40 AM',   title:'Hair/makeup, get dressed',             checkable:false},
+        {id:'t4',  time:'8:40 AM',        title:'⭐ Schedule 1:1 w/Heather',            note:'Urgent, due 4/15 — ~5 min', firstStep:'Open your calendar and find a mutual slot', checkable:true, urgent:true},
+        {id:'t5',  time:'8:45 AM',        title:'Leave for office 🚗',                  checkable:false},
+      ]},
+      { title:'🏫 Stepping Stones', energy:'fixed', tasks:[
+        {id:'t6',  time:'9:15 AM',        title:'Arrive at office',                     checkable:false},
+        {id:'t7',  time:'9:30–11:30 AM',  title:'Stepping Stones class',                checkable:false},
+        {id:'t8',  time:'11:30 AM',       title:'Travel home 🚗',                       checkable:false},
+      ]},
+      { title:'📅 EMR Meetings', energy:'fixed', tasks:[
+        {id:'t9',  time:'12:00–1:00 PM',  title:'EMR meeting 💻',                       checkable:false},
+        {id:'t10', time:'1:00–1:30 PM',   title:'Lunch break 🍽️',                       checkable:false},
+        {id:'t11', time:'1:30–3:30 PM',   title:'EMR project meetings 💻',              note:'Eval form edits during this block',          checkable:false},
+      ]},
+      { title:'✏️ Post-Meeting', energy:'decent', tasks:[
+        {id:'t12', time:'3:30–4:00 PM',   title:'Send eval form edits 📝',              note:'All edits in — now send it!', firstStep:'Open email and attach the finished form', checkable:true, urgent:true},
+        {id:'t13', time:'4:00–4:15 PM',   title:'Buffer / decompress',                  checkable:false},
+      ]},
+      { title:'🐕 Dog Walk + Crash', energy:'crash', tasks:[
+        {id:'t14', time:'4:15–4:45 PM',   title:'Dog walk 🐕',                          checkable:false},
+        {id:'t15', time:'4:45–5:15 PM',   title:'Snack + decompress 🍎',                checkable:false},
+        {id:'t16', time:'5:15–5:45 PM',   title:'Write progress notes 📝',              note:'Low stakes — good crash task', firstStep:'Open your notes doc and write one line per client', checkable:true, urgent:true},
+      ]},
+      { title:'🌙 Evening', energy:'decent', tasks:[
+        {id:'t17', time:'6:00 PM',        title:'Dinner 🍽️',                            checkable:false},
+        {id:'t18', time:'6:30–8:30 PM',   title:'Taxes 💸',                             note:'Due tomorrow', firstStep:'Just open the folder and lay out your documents', checkable:true, urgent:true},
+        {id:'t19', time:'9:00 PM',        title:'Wind-down 📵',                         checkable:false},
+        {id:'t20', time:'Before 10 PM',   title:'Bed 😴',                               checkable:false},
+      ]},
+    ]
+  },
+  {
+    key:'wed', label:'Wed', fullLabel:'Wednesday, April 15', hasplan:true,
+    deadline:'🚨 <strong>Taxes due TODAY by evening</strong> — billing deadline also tomorrow (Apr 16)!',
+    sections:[
+      { title:'🌅 Morning', energy:'decent', tasks:[
+        {id:'w1',  time:'6:30 AM',        title:'Wake up, breakfast, coffee ☕',        checkable:false},
+        {id:'w2',  time:'7:00 AM',        title:'⭐ Check email/calendar',              note:'Quick win ~10 min',                          checkable:true, urgent:false},
+        {id:'w3',  time:'7:15 AM',        title:'Yoga / stretching 🧘',                 checkable:false},
+        {id:'w4',  time:'7:45 AM',        title:'Leave for office 🚗',                  checkable:false},
+      ]},
+      { title:'🏢 In-Person Morning (at office)', energy:'fixed', tasks:[
+        {id:'w5',  time:'8:15 AM',        title:'Arrive at office',                     checkable:false},
+        {id:'w6',  time:'8:30–9:30 AM',   title:'Office team meeting (in-person)',      checkable:false},
+        {id:'w7',  time:'10:00 AM–12 PM', title:'EMR project meetings (in-person)',     checkable:false},
+        {id:'w8',  time:'12:00 PM',       title:'Travel home 🚗',                       checkable:false},
+      ]},
+      { title:'🍽️ Lunch', energy:'decent', tasks:[
+        {id:'w9',  time:'12:30–1:00 PM',  title:'Lunch 🍽️',                             checkable:false},
+      ]},
+      { title:'📅 Afternoon EMR (from home)', energy:'fixed', tasks:[
+        {id:'w10', time:'1:00–2:00 PM',   title:'EMR Sync (Zoom) 💻',                   checkable:false},
+      ]},
+      { title:'🔥 Critical', energy:'peak', tasks:[
+        {id:'w11', time:'2:00–4:00 PM',   title:'TAXES 💸',                             note:'Due TODAY — no interruptions!', firstStep:'Open TurboTax and pick up where you left off', checkable:true, urgent:true},
+      ]},
+      { title:'🐕 Dog Walk', energy:'crash', tasks:[
+        {id:'w12', time:'~2:30 PM',       title:'Dog walk 🐕',                          note:'Fit in around taxes',                        checkable:false},
+        {id:'w13', time:'4:00 PM',        title:'Done for the day ✅',                   checkable:false},
+      ]},
+      { title:'🌙 Evening', energy:'decent', tasks:[
+        {id:'w14', time:'6:00 PM',        title:'Dinner 🍽️',                            checkable:false},
+        {id:'w15', time:'9:00 PM',        title:'Wind-down 📵',                         checkable:false},
+        {id:'w16', time:'Before 10 PM',   title:'Bed 😴',                               checkable:false},
+      ]},
+    ]
+  },
+  { key:'thu', label:'Thu', fullLabel:'Thursday, April 17', hasplan:false, deadline:null, sections:[] },
+  { key:'fri', label:'Fri', fullLabel:'Friday, April 18',   hasplan:false, deadline:null, sections:[] },
+];
+
+const TODO_LIST = {
+  urgent: [
+    {id:'u1', title:'Prep for taxes',                    done:false, scheduledOn:'mon'},
+    {id:'u2', title:'Edit eval form',                    done:false, scheduledOn:'tue'},
+    {id:'u3', title:'Write progress notes',              done:false, scheduledOn:'tue'},
+    {id:'u4', title:'Schedule 1:1 w/Heather',           done:false, scheduledOn:'tue'},
+    {id:'u5', title:'Order Ellie\'s AbleNet device',    done:true,  scheduledOn:'mon'},
+    {id:'u6', title:'Send credible eval form edits',    done:true,  scheduledOn:null},
+    {id:'u7', title:'Schedule AAC observation',         done:true,  scheduledOn:null},
+    {id:'u8', title:'Schedule Anya',                    done:true,  scheduledOn:null},
+    {id:'u9', title:'Schedule Nolan F',                 done:true,  scheduledOn:null},
+  ],
+  work: [
+    {id:'wk1', title:'Training logs due 6/5',                         done:false, scheduledOn:null},
+    {id:'wk2', title:'Review schedule for Heather observation by 4/17',done:false, scheduledOn:null},
+    {id:'wk3', title:'Edit Isaac\'s AAC vocab on iPad',               done:false, scheduledOn:null},
+    {id:'wk4', title:'Write Isaac transition notes by 4/17',          done:false, scheduledOn:null},
+    {id:'wk5', title:'Get Stepping Stones subs for May',              done:false, scheduledOn:null},
+  ],
+  personal: [
+    {id:'p1', title:'Book Portugal flights',             done:false, scheduledOn:null},
+    {id:'p2', title:'Book Portugal lodging',             done:false, scheduledOn:null},
+    {id:'p3', title:'Pay VM bill',                       done:false, scheduledOn:null},
+    {id:'p4', title:'Taxes done by evening of 4/15',    done:false, scheduledOn:'wed'},
+    {id:'p5', title:'Submit home loan app',              done:true,  scheduledOn:null},
+  ],
+};
+
+const ENCOURAGEMENTS = [
+  'Nice one 👏','One less thing 🎉','You\'re doing it ✨','Keep going 💪',
+  'That\'s the one 🙌','Momentum! 🔥','Look at you go ⚡','Nailed it ✓',
+  'Brain: 1, ADHD: 0 🧠','Small wins add up 🌱',
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const SP='planner_done_', PK='planner_postponed', TK='planner_tomorrow',
+      TDK='planner_todo_done', CK='planner_carried', SK='planner_streak',
+      PIK='planner_pinned', FK='planner_focus', EFK='planner_energyfilter';
+
+function loadSet(k){try{const s=localStorage.getItem(k);return s?new Set(JSON.parse(s)):new Set();}catch(e){return new Set();}}
+function saveSet(k,s){try{localStorage.setItem(k,JSON.stringify([...s]));}catch(e){}}
+function loadObj(k){try{const s=localStorage.getItem(k);return s?JSON.parse(s):{};}catch(e){return {};}}
+function saveObj(k,o){try{localStorage.setItem(k,JSON.stringify(o));}catch(e){}}
+function loadStr(k,def=''){try{return localStorage.getItem(k)||def;}catch(e){return def;}}
+function saveStr(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+
+function todayKey(){return['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];}
+
+let activeDay   = WEEK.find(d=>d.key===todayKey())?todayKey():'mon';
+let activeView  = 'plan';
+let doneSets    = {}; WEEK.forEach(d=>{doneSets[d.key]=loadSet(SP+d.key);});
+let postponedSet  = loadSet(PK);
+let tomorrowMap   = loadObj(TK);
+let todoDoneSet   = loadSet(TDK);
+let carriedStates = loadObj(CK);
+let pinnedTaskId  = loadStr(PIK, null);
+let focusMode     = loadStr(FK,'0')==='1';
+let energyFilter  = loadStr(EFK,'all'); // 'all'|'peak'|'decent'|'crash'
+let completedOpen = false;
+let streakData    = loadObj(SK); // {lastDate, count}
+
+// Last action for undo
+let lastAction = null;
+let toastTimer = null;
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+function nowMin(){const d=new Date();return d.getHours()*60+d.getMinutes();}
+function parseMin(str){
+  if(!str)return null;
+  const m=str.match(/(\d+):(\d+)\s*(AM|PM)?/i);if(!m)return null;
+  let h=parseInt(m[1]),min=parseInt(m[2]);
+  const mer=(m[3]||'').toUpperCase();
+  if(mer==='PM'&&h<12)h+=12;if(mer==='AM'&&h===12)h=0;
+  if(!mer&&h<6)h+=12;
+  return h*60+min;
+}
+function isNow(t){const s=parseMin(t.time);if(!s)return false;return Math.abs(nowMin()-s)<=50;}
+function getCheckable(day){return day.sections.flatMap(s=>s.tasks.filter(t=>t.checkable));}
+function getAll(day){return day.sections.flatMap(s=>s.tasks);}
+function getDoneSet(day){
+  const set=doneSets[day.key];
+  getAll(day).forEach(t=>{if(t.predone)set.add(t.id);});
+  return set;
+}
+function getDayProgress(day){
+  const checkable=getCheckable(day);
+  const set=getDoneSet(day);
+  const resolved=checkable.filter(t=>set.has(t.id)||tomorrowMap[t.id]).length;
+  return {resolved, total:checkable.length};
+}
+function isDayResolved(day){const{resolved,total}=getDayProgress(day);return total>0&&resolved===total;}
+function nextDayKey(key){const keys=WEEK.map(d=>d.key);const i=keys.indexOf(key);return i>=0&&i<keys.length-1?keys[i+1]:null;}
+
+// Streak
+function updateStreak(dayKey){
+  const today=new Date().toISOString().slice(0,10);
+  if(streakData.lastDate===today)return;
+  const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  if(streakData.lastDate===yesterday){streakData.count=(streakData.count||0)+1;}
+  else{streakData.count=1;}
+  streakData.lastDate=today;
+  saveObj(SK,streakData);
+}
+
+// Current energy window label
+function currentEnergyWindow(){
+  const h=new Date().getHours();
+  if(h>=8&&h<10)return'peak';
+  if(h>=10&&h<15)return'decent';
+  if(h>=15&&h<17)return'crash';
+  return'all';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════════
+function swipeDone(dayKey, id, title){
+  const prev={type:'done',dayKey,id};
+  doneSets[dayKey].add(id);
+  postponedSet.delete(id);
+  delete tomorrowMap[id];
+  saveSet(SP+dayKey,doneSets[dayKey]);
+  saveSet(PK,postponedSet);
+  saveObj(TK,tomorrowMap);
+  lastAction=prev;
+  showToast(ENCOURAGEMENTS[Math.floor(Math.random()*ENCOURAGEMENTS.length)]);
+  renderApp();
+  if(isDayResolved(WEEK.find(d=>d.key===dayKey))){updateStreak(dayKey);setTimeout(confetti,200);}
+}
+
+function swipePostpone(dayKey, id){
+  const prev={type:'postpone',dayKey,id};
+  doneSets[dayKey].delete(id);
+  delete tomorrowMap[id];
+  postponedSet.add(id);
+  saveSet(SP+dayKey,doneSets[dayKey]);
+  saveSet(PK,postponedSet);
+  saveObj(TK,tomorrowMap);
+  lastAction=prev;
+  showToast('⏸ Postponed');
+  renderApp();
+}
+
+function swipeTomorrow(dayKey, id, title){
+  const prev={type:'tomorrow',dayKey,id,title};
+  doneSets[dayKey].delete(id);
+  postponedSet.delete(id);
+  const fromDay=WEEK.find(d=>d.key===dayKey);
+  tomorrowMap[id]={title,fromDay:dayKey,fromDayLabel:fromDay?fromDay.label:dayKey};
+  saveSet(SP+dayKey,doneSets[dayKey]);
+  saveSet(PK,postponedSet);
+  saveObj(TK,tomorrowMap);
+  lastAction=prev;
+  showToast('→ Moved to tomorrow');
+  renderApp();
+  if(isDayResolved(WEEK.find(d=>d.key===dayKey))){updateStreak(dayKey);setTimeout(confetti,200);}
+}
+
+function undoLast(){
+  if(!lastAction)return;
+  const a=lastAction; lastAction=null;
+  if(a.type==='done'){doneSets[a.dayKey].delete(a.id);saveSet(SP+a.dayKey,doneSets[a.dayKey]);}
+  if(a.type==='postpone'){postponedSet.delete(a.id);saveSet(PK,postponedSet);}
+  if(a.type==='tomorrow'){delete tomorrowMap[a.id];saveObj(TK,tomorrowMap);}
+  hideToast();
+  renderApp();
+}
+
+// Carried task swipes
+function carriedDone(id){
+  carriedStates[id]='done';
+  saveObj(CK,carriedStates);
+  lastAction={type:'carried',id,prev:carriedStates[id]};
+  showToast(ENCOURAGEMENTS[Math.floor(Math.random()*ENCOURAGEMENTS.length)]);
+  renderApp();
+}
+function carriedPostpone(id){carriedStates[id]='postponed';saveObj(CK,carriedStates);showToast('⏸ Postponed');renderApp();}
+function carriedTomorrow(id,title){
+  carriedStates[id]='tomorrow';
+  const nd=nextDayKey(activeDay);
+  if(nd){tomorrowMap[id]={title,fromDay:activeDay,fromDayLabel:WEEK.find(d=>d.key===activeDay)?.label||activeDay};saveObj(TK,tomorrowMap);}
+  saveObj(CK,carriedStates);
+  showToast('→ Moved to tomorrow again');
+  renderApp();
+}
+function carriedUndo(id){delete carriedStates[id];saveObj(CK,carriedStates);renderApp();}
+
+function toggleTodoDone(id){
+  if(todoDoneSet.has(id))todoDoneSet.delete(id);else todoDoneSet.add(id);
+  saveSet(TDK,todoDoneSet);
+  renderApp();
+}
+
+function togglePin(id){
+  pinnedTaskId=pinnedTaskId===id?null:id;
+  saveStr(PIK,pinnedTaskId||'');
+  renderApp();
+}
+function toggleFocus(){
+  focusMode=!focusMode;
+  saveStr(FK,focusMode?'1':'0');
+  renderApp();
+}
+function setEnergyFilter(f){
+  energyFilter=energyFilter===f?'all':f;
+  saveStr(EFK,energyFilter);
+  renderApp();
+}
+function toggleCompleted(){completedOpen=!completedOpen;renderApp();}
+
+function switchDay(k){activeDay=k;activeView='plan';renderApp();}
+function switchView(v){activeView=v;renderApp();}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+function showToast(msg){
+  clearTimeout(toastTimer);
+  document.getElementById('toast-msg').textContent=msg;
+  document.getElementById('toast').classList.add('show');
+  toastTimer=setTimeout(hideToast,4000);
+}
+function hideToast(){
+  clearTimeout(toastTimer);
+  document.getElementById('toast').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONFETTI
+// ═══════════════════════════════════════════════════════════════
+function confetti(){
+  const cv=document.getElementById('confetti-canvas');
+  cv.style.display='block';
+  const ctx=cv.getContext('2d');
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const cols=['#C8973A','#C4736A','#6A9E7E','#8B7BB5','#5B7FA6'];
+  const ps=Array.from({length:70},()=>({x:Math.random()*cv.width,y:-10,r:3+Math.random()*5,d:1.5+Math.random()*2,c:cols[Math.floor(Math.random()*5)],ta:0,ts:.1+Math.random()*.15}));
+  let f=0;
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{p.ta+=p.ts;p.y+=p.d;const t=Math.sin(p.ta)*11;ctx.beginPath();ctx.fillStyle=p.c;ctx.moveTo(p.x+t+p.r,p.y);ctx.lineTo(p.x+t,p.y+p.r*2);ctx.lineTo(p.x+t-p.r,p.y);ctx.closePath();ctx.fill();});
+    if(++f<130)requestAnimationFrame(draw);else{ctx.clearRect(0,0,cv.width,cv.height);cv.style.display='none';}
+  }
+  draw();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SWIPE HANDLING
+// ═══════════════════════════════════════════════════════════════
+function initSwipe(el, onRight, onLeft1, onLeft2){
+  let startX=0,startY=0,dx=0,dragging=false,dir=null;
+  const card=el.querySelector('.task,.carried-task');
+  if(!card)return;
+
+  el.addEventListener('touchstart',e=>{
+    startX=e.touches[0].clientX;startY=e.touches[0].clientY;dx=0;dragging=true;dir=null;
+    card.style.transition='none';
+  },{passive:true});
+
+  el.addEventListener('touchmove',e=>{
+    if(!dragging)return;
+    dx=e.touches[0].clientX-startX;
+    const dy=Math.abs(e.touches[0].clientY-startY);
+    if(!dir){if(Math.abs(dx)>6||dy>6)dir=Math.abs(dx)>dy?'h':'v';}
+    if(dir==='h'){
+      e.preventDefault();
+      card.style.transform=`translateX(${dx}px)`;
+    }
+  },{passive:false});
+
+  el.addEventListener('touchend',()=>{
+    if(!dragging||dir!=='h'){card.style.transition='';card.style.transform='';dragging=false;return;}
+    dragging=false;
+    card.style.transition='transform .25s ease';
+    if(dx>70&&onRight){
+      card.style.transform=`translateX(110%)`;
+      setTimeout(()=>{card.style.transition='';card.style.transform='';onRight();},220);
+    } else if(dx<-55){
+      // show right bg momentarily then snap back
+      card.style.transform=`translateX(-${Math.min(Math.abs(dx),140)}px)`;
+      // trigger based on which action button area
+      if(dx<-110&&onLeft2){
+        setTimeout(()=>{card.style.transition='';card.style.transform='';onLeft2();},220);
+      } else if(onLeft1){
+        setTimeout(()=>{card.style.transition='';card.style.transform='';onLeft1();},220);
+      } else {
+        setTimeout(()=>{card.style.transform='';},300);
+      }
+    } else {
+      card.style.transform='';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderApp(){
+  // Apply body classes for filter/focus
+  document.body.classList.toggle('focus-mode', focusMode&&activeView==='plan');
+  ['peak','decent','crash','all'].forEach(e=>document.body.classList.remove('filter-'+e));
+  if(energyFilter!=='all')document.body.classList.add('filter-'+energyFilter);
+
+  const day=WEEK.find(d=>d.key===activeDay);
+  const {resolved,total}=getDayProgress(day);
+  const pct=total>0?Math.round(resolved/total*100):0;
+  const resolved100=total>0&&resolved===total;
+  const tk=todayKey();
+  const ec={peak:'#C8973A',decent:'#6A9E7E',crash:'#8B7BB5',fixed:'#5B7FA6'};
+
+  // Carried tasks for this day
+  const carriedForThisDay=Object.entries(tomorrowMap)
+    .filter(([id,info])=>nextDayKey(info.fromDay)===activeDay)
+    .map(([id,info])=>({id,...info}));
+
+  // Streak display
+  const streakCount=streakData.count||0;
+  const streakLabel=streakCount>=2?`🔥 ${streakCount} day streak`:'';
+
+  // Header
+  const eyebrow=activeView==='list'?'Full To-Do List':day.fullLabel;
+  const htitle=activeView==='list'?'All Tasks':'Today\'s Plan';
+  const hsub=activeView==='list'
+    ?`${Object.values(TODO_LIST).flat().filter(t=>!todoDoneSet.has(t.id)&&!t.done).length} tasks remaining`
+    :resolved100?'All tasks resolved 🎉':`${resolved} of ${total} to-dos done`;
+  const progLbl=resolved100?'All completed or reassigned ✓':`${pct}% complete`;
+
+  const tabsHtml=[
+    ...WEEK.map(d=>{
+      let cls='tab';
+      if(activeView==='plan'&&d.key===activeDay)cls+=' active';
+      if(d.key===tk&&!(activeView==='plan'&&d.key===activeDay))cls+=' today-tab';
+      if(!d.hasplan)cls+=' no-plan';
+      return `<div class="${cls}" onclick="switchDay('${d.key}')">${d.label}${d.key===tk?'<span style="margin-left:3px;font-size:8px">●</span>':''}</div>`;
+    }),
+    `<div class="tab list-tab${activeView==='list'?' active':''}" onclick="switchView('list')">📋 All Tasks</div>`
+  ].join('');
+
+  let html=`
+    <div class="header">
+      <div class="eyebrow">${eyebrow}</div>
+      <div class="h-title">${htitle}</div>
+      <div class="h-sub">${hsub}</div>
+      ${activeView==='plan'?'<div class="h-sub-note">Events & anchors not counted</div>':''}
+      ${activeView==='plan'?`<div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div><div class="prog-lbl">${progLbl}</div>`:''}
+      ${activeView==='plan'?`<div class="header-controls">
+        <button class="hc-btn${focusMode?' focus-active':''}" onclick="toggleFocus()">
+          ${focusMode?'✕ Exit Focus':'🎯 Focus Mode'}
+        </button>
+        <button class="hc-btn${energyFilter!=='all'?' active':''}" onclick="document.getElementById('ebar').scrollIntoView({behavior:'smooth'})">
+          ⚡ Energy Filter
+        </button>
+        ${streakLabel?`<span class="hc-btn streak">${streakLabel}</span>`:''}
+      </div>`:''}
+    </div>
+    <div class="tabs-wrap"><div class="tabs">${tabsHtml}</div></div>
+  `;
+
+  // ── LIST VIEW ────────────────────────────────────────────────
+  if(activeView==='list'){
+    const cats=[
+      {key:'urgent',  label:'🚨 Urgent',    cls:'cat-urgent',  items:TODO_LIST.urgent},
+      {key:'work',    label:'💼 Work Tasks', cls:'cat-work',    items:TODO_LIST.work},
+      {key:'personal',label:'🌿 Personal',   cls:'cat-personal',items:TODO_LIST.personal},
+    ];
+    html+=`<div class="list-header">
+      <div class="sched-legend"><div class="sched-dot"></div><span>Dimmed = already on this week's plan</span></div>
+    </div>`;
+
+    let allCompleted=[];
+    let delay=0;
+    cats.forEach(cat=>{
+      const active=cat.items.filter(i=>!i.done&&!todoDoneSet.has(i.id));
+      const completed=cat.items.filter(i=>i.done||todoDoneSet.has(i.id));
+      allCompleted=allCompleted.concat(completed.map(i=>({...i,catCls:cat.cls,catKey:cat.key})));
+
+      html+=`<div class="list-section"><div class="list-sec-title">${cat.label}</div>`;
+      if(active.length===0){
+        html+=`<div style="padding:8px 0 4px;font-size:12.5px;color:var(--muted);font-style:italic;">All done ✓</div>`;
+      }
+      active.forEach(item=>{
+        const isScheduled=!!item.scheduledOn;
+        const dayLabel=item.scheduledOn?WEEK.find(d=>d.key===item.scheduledOn)?.label:null;
+        delay+=20;
+        html+=`
+          <div class="todo-item${isScheduled?' scheduled':''}" style="animation-delay:${delay}ms" onclick="toggleTodoDone('${item.id}')">
+            <div class="todo-chk"></div>
+            <div class="todo-body">
+              <div class="todo-title">${item.title}</div>
+              <div class="todo-meta">
+                <span class="todo-cat ${cat.cls}">${cat.key}</span>
+                ${isScheduled&&dayLabel?`<span class="sched-tag">📅 ${dayLabel}</span>`:''}
+              </div>
+            </div>
+          </div>`;
+      });
+      html+=`</div>`;
+    });
+
+    // Collapsible completed section
+    html+=`
+      <div class="completed-toggle" onclick="toggleCompleted()">
+        <span class="completed-toggle-label">Completed tasks</span>
+        <span class="completed-toggle-count">${allCompleted.length}</span>
+        <span class="completed-toggle-arrow${completedOpen?' open':''}">▼</span>
+      </div>
+      <div class="completed-section${completedOpen?' open':''}">`;
+    allCompleted.forEach(item=>{
+      html+=`
+        <div class="completed-item" onclick="toggleTodoDone('${item.id}')">
+          <div class="completed-chk">✓</div>
+          <div class="todo-title">${item.title}</div>
+        </div>`;
+    });
+    html+=`</div>`;
+    html+=`<div class="footer">Synced from your Life Planning page in Notion<br><span style="opacity:.55">Updated each morning by Claude</span></div>`;
+
+  } else {
+    // ── PLAN VIEW ────────────────────────────────────────────────
+    if(!day.hasplan){
+      html+=`<div class="no-plan-msg"><div class="emoji">🗓️</div><h3>No plan yet for ${day.label}</h3><p>Ask Claude to build your ${day.fullLabel} plan and it'll appear here next time!</p></div>`;
+    } else {
+      if(day.deadline)html+=`<div class="deadline">${day.deadline}</div>`;
+
+      // All done banner
+      if(resolved100)html+=`<div class="all-done-banner"><div class="em">🎉</div><h3>All tasks completed or reassigned</h3><p>Nothing outstanding for ${day.label}. Nice work!</p></div>`;
+
+      // Focus mode banner
+      if(focusMode){
+        const pinned=pinnedTaskId?getAll(day).find(t=>t.id===pinnedTaskId):null;
+        const focusTitle=pinned?pinned.title:'your top urgent task';
+        html+=`<div class="focus-banner">
+          <div>🎯</div>
+          <div class="focus-banner-text">
+            <strong>Focus Mode</strong> — just one thing<br>
+            <span class="focus-hint">${pinned?`Pinned: ${focusTitle}`:'Showing your first urgent task. Tap 📌 on any task to pin it.'}</span>
+          </div>
+        </div>`;
+      }
+
+      // Carried tray
+      if(carriedForThisDay.length>0){
+        html+=`<div class="tray-banner"><div class="tray-title">📬 Carried Over from Yesterday</div>`;
+        carriedForThisDay.forEach(item=>{
+          const cs=carriedStates[item.id];
+          let stCls='',chk='',statusLabel='';
+          if(cs==='done'){stCls='done';chk='✓';}
+          if(cs==='postponed'){stCls='postponed-s';chk='⏸';statusLabel='<div class="t-status postponed">⏸ Postponed</div>';}
+          if(cs==='tomorrow'){stCls='tomorrow-s';chk='→';statusLabel='<div class="t-status tomorrow">→ Moved to tomorrow again</div>';}
+          html+=`
+            <div class="carried-wrap" id="cw-${item.id}">
+              <div class="carried-bg-left">✓ Done</div>
+              <div class="carried-bg-right">
+                <button class="swipe-action-btn" onclick="carriedPostpone('${item.id}')">⏸ Later</button>
+                <button class="swipe-action-btn" onclick="carriedTomorrow('${item.id}','${item.title.replace(/'/g,"\\'")}')">→ Tomorrow</button>
+              </div>
+              <div class="carried-task ${stCls}">
+                <div class="carried-chk">${chk}</div>
+                <div class="t-body">
+                  <div class="carried-from">From ${item.fromDayLabel}</div>
+                  <div class="t-title">${item.title}</div>
+                  ${statusLabel}
+                </div>
+                ${cs?`<button style="background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;padding:0 2px;" onclick="carriedUndo('${item.id}')">↩</button>`:''}
+              </div>
+            </div>`;
+        });
+        html+=`</div>`;
+      }
+
+      // Energy filter bar
+      html+=`<div class="energy-bar" id="ebar">
+        <button class="ef-btn${energyFilter==='all'?' active-all':''}" onclick="setEnergyFilter('all')">All times</button>
+        <button class="ef-btn${energyFilter==='peak'?' active-peak':''}" onclick="setEnergyFilter('peak')">💪 Peak (8–10am)</button>
+        <button class="ef-btn${energyFilter==='decent'?' active-decent':''}" onclick="setEnergyFilter('decent')">🌤 Decent (10am–3pm)</button>
+        <button class="ef-btn${energyFilter==='crash'?' active-crash':''}" onclick="setEnergyFilter('crash')">😴 Crash (3–5pm)</button>
+      </div>`;
+
+      html+=`<div class="legend">
+        <div class="li"><div class="ld" style="background:${ec.peak}"></div>Peak</div>
+        <div class="li"><div class="ld" style="background:${ec.decent}"></div>Decent</div>
+        <div class="li"><div class="ld" style="background:${ec.crash}"></div>Crash</div>
+        <div class="li"><div class="ld" style="background:${ec.fixed}"></div>Fixed</div>
+      </div>`;
+
+      // Figure out which task gets focus
+      let focusTaskId=null;
+      if(focusMode){
+        if(pinnedTaskId&&getAll(day).find(t=>t.id===pinnedTaskId)){
+          focusTaskId=pinnedTaskId;
+        } else {
+          const set=getDoneSet(day);
+          const first=getCheckable(day).find(t=>!set.has(t.id)&&!tomorrowMap[t.id]&&t.urgent);
+          if(!first){const f2=getCheckable(day).find(t=>!set.has(t.id)&&!tomorrowMap[t.id]);if(f2)focusTaskId=f2.id;}
+          else focusTaskId=first.id;
+        }
+      }
+
+      let delay=0;
+      day.sections.forEach(sec=>{
+        const hasFocusTask=focusMode&&sec.tasks.some(t=>t.id===focusTaskId);
+        html+=`<div class="section${hasFocusTask?' has-focus-task':''}">`;
+        html+=`<div class="sec-title">${sec.title}</div>`;
+
+        sec.tasks.forEach(t=>{
+          const set=getDoneSet(day);
+          const isDone=set.has(t.id);
+          const isPostponed=postponedSet.has(t.id)&&!isDone;
+          const isTomorrow=!!tomorrowMap[t.id]&&!isDone;
+          const isResolved=isDone||isTomorrow;
+          const now=isNow(t)&&!isResolved&&activeDay===tk;
+          const isPinned=pinnedTaskId===t.id;
+          const isFocused=focusTaskId===t.id;
+          delay+=20;
+
+          if(now)html+=`<div class="now-pill"><div class="now-dot"></div>Happening now</div>`;
+
+          if(t.checkable){
+            let stCls='',chk='',statusLabel='';
+            if(isDone){stCls='done';chk='✓';}
+            if(isPostponed){stCls='postponed';chk='⏸';statusLabel='<div class="t-status postponed">⏸ Postponed</div>';}
+            if(isTomorrow){stCls='tomorrow-state';chk='→';statusLabel='<div class="t-status tomorrow">→ Moved to tomorrow</div>';}
+
+            const isFocusTarget=focusMode&&t.id===focusTaskId;
+            const wrapClass=`swipe-wrap energy-${sec.energy}${focusMode&&!isFocusTarget?' not-focus':''}`;
+
+            html+=`
+              <div class="${wrapClass}" id="sw-${t.id}" style="animation-delay:${delay}ms">
+                <div class="swipe-bg-left">✓ Done</div>
+                <div class="swipe-bg-right">
+                  <button class="swipe-action-btn" onclick="swipePostpone('${day.key}','${t.id}')">⏸ Later</button>
+                  <button class="swipe-action-btn" onclick="swipeTomorrow('${day.key}','${t.id}','${t.title.replace(/'/g,"\\'")}')">→ Tomorrow</button>
+                </div>
+                <div class="task ${sec.energy} ${stCls}">
+                  <div class="chk">${chk}</div>
+                  <div class="t-body">
+                    ${t.time?`<div class="t-time">${t.time}</div>`:''}
+                    <div class="t-title">${t.title}</div>
+                    ${t.note&&!t.firstStep?`<div class="t-note">${t.note}</div>`:''}
+                    ${t.firstStep&&t.urgent&&!isResolved?`<div class="t-first-step">${t.firstStep}</div>`:''}
+                    ${statusLabel}
+                  </div>
+                  ${t.urgent&&!isResolved&&!isPostponed?`<span class="badge">Urgent</span>`:''}
+                  <button class="pin-btn${isPinned?' pinned':''}" onclick="event.stopPropagation();togglePin('${t.id}')" title="${isPinned?'Unpin':'Pin as focus'}">📌</button>
+                </div>
+              </div>`;
+          } else {
+            html+=`
+              <div class="event-wrap energy-${sec.energy}" style="animation-delay:${delay}ms">
+                <div class="task ${sec.energy} event">
+                  <div class="evt-dot"></div>
+                  <div class="t-body">
+                    ${t.time?`<div class="t-time">${t.time}</div>`:''}
+                    <div class="t-title">${t.title}</div>
+                    ${t.note?`<div class="t-note">${t.note}</div>`:''}
+                  </div>
+                </div>
+              </div>`;
+          }
+        });
+        html+=`</div>`;
+      });
+    }
+    html+=`<div class="footer">Week of April 13 · Swipe right = done · Swipe left = later/tomorrow<br><span style="opacity:.55">Refreshed each morning by Claude</span></div>`;
+  }
+
+  document.getElementById('root').innerHTML=html;
+
+  // Init swipe handlers after render
+  document.querySelectorAll('[id^="sw-"]').forEach(wrap=>{
+    const id=wrap.id.replace('sw-','');
+    const task=getAll(day).find(t=>t.id===id);
+    if(!task)return;
+    initSwipe(wrap,
+      ()=>swipeDone(day.key,id,task.title),
+      ()=>swipePostpone(day.key,id),
+      ()=>swipeTomorrow(day.key,id,task.title)
+    );
+  });
+  document.querySelectorAll('[id^="cw-"]').forEach(wrap=>{
+    const id=wrap.id.replace('cw-','');
+    const info=tomorrowMap[id];
+    if(!info)return;
+    initSwipe(wrap,
+      ()=>carriedDone(id),
+      ()=>carriedPostpone(id),
+      ()=>carriedTomorrow(id,info.title)
+    );
+  });
+}
+
+renderApp();
+</script>
+</body>
+</html>
